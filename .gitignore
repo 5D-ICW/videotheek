@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# NPM
+/package-lock.json
+
+# Tailwind CSS Output
+/static/style.css
