@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Online Videotheek </title>
+ </head>
+ <body>
+    <h1>Online Videotheek</h1>
+
+    <label for="filter">Filter op:</label>
+    <select id="filter">
+        <option value="">Geen filter</option>
+        <option value="title">Titel</option>
+        <option value="genre">Genre</option>
+        <option value="year">Releasejaar</option>
+    </select>
+    <input type="text" id="filterInput" placeholder="Zoek..." onkeyup="applyFilter()">
+
+    <label for="sort">Sorteren op:</label>
+    <select id="sort" onchange="applySort()">
+        <option value="popularity">Populariteit</option>
+        <option value="title">Titel</option>
+        <option value="year">Releasejaar</option>
+    </select>
+
+    <div class="film-container" id="filmList"></div>
+ </body>
+</html>
