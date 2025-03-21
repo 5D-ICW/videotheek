@@ -19,7 +19,8 @@ def inject_signed_in():
     signed_in = False
     if "user_id" in session:
         signed_in = True
-    return dict(signedIn=signed_in)
+
+    return dict(signedIn=signed_in, rol=session.get("rol", "CLIENT"))
 
 @app.route('/')
 def home():
@@ -60,9 +61,12 @@ def signin():
 
         if user and check_password_hash(user[0], password):
             session["user_id"] = user[1]
-            session["rol"] = rol[0]
-            if session["rol"] == "ADMIN":
-                return redirect(url_for("panel"))
+            if rol:
+                session["rol"] = rol[0]
+                if session["rol"] == "ADMIN":
+                    return redirect(url_for("panel"))
+            else:
+                session['rol'] = "CLIENT"
             return redirect(url_for("fav"))
         else:
             abort(401)
@@ -81,6 +85,9 @@ def panel():
 @app.route('/panel/create', methods=['GET', 'POST'])
 def create_user():
     if "user_id" not in session:
+        abort(401)
+
+    if session["rol"] != "ADMIN":
         abort(401)
 
     if request.method == 'POST':
@@ -107,18 +114,19 @@ def delete_user():
     if "user_id" not in session:
         abort(401)
 
+    if session["rol"] != "ADMIN":
+        abort(401)
+
     if request.method == 'POST':
-        username = request.form['username']
-        if username == "admin":
-            abort(500)
+        email = request.form['email']
 
         conn = get_db_connection()
-        user = conn.execute('SELECT * FROM klanten WHERE username = ?', [username]).fetchone()
+        user = conn.execute('SELECT * FROM klanten WHERE email = ?', [email]).fetchone()
         if not user:
             # TODO: Show error message
             return abort(500)
 
-        conn.execute('DELETE FROM klanten WHERE username = ?;', [username])
+        conn.execute('DELETE FROM klanten WHERE email = ?;', [email])
         conn.commit()
         conn.close()
         return redirect(url_for('panel'))
@@ -148,27 +156,6 @@ def add_movie():
         return redirect(url_for('panel'))
 
     return render_template('add-movie.html')
-
-@app.route('/panel/remove', methods=['GET', 'POST'])
-def remove_movie():
-    if "user_id" not in session:
-        abort(401)
-
-    if request.method == 'POST':
-        title = request.form['title']
-
-        conn = get_db_connection()
-        user = conn.execute('SELECT * FROM films WHERE titel = ?', [title]).fetchone()
-        if not user:
-            # TODO: Show error message
-            return abort(500)
-
-        conn.execute('DELETE FROM films WHERE titel = ?;', [title])
-        conn.commit()
-        conn.close()
-        return redirect(url_for('panel'))
-
-    return render_template('remove-movie.html')
 
 @app.route("/signout")
 def sign_out():
