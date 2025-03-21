@@ -3,8 +3,13 @@
 {% block content %}
     <div class="flex flex-col justify-center text-center items-center justify-items-center gap-4 sm:p-20">
         <h1>Admin panel</h1>
-        <a href="{{ url_for('create_user') }}" class="btn btn-primary">Create an user</a>
-        <a href="{{ url_for('signout') }}" class="btn btn-primary">Sign Out</a>
+        <div class="flex flex-col gap-4">
+            <a href="{{ url_for('add_movie') }}" class="btn btn-primary">Add a movie to favorites</a>
+            <a href="{{ url_for('remove_movie') }}" class="btn btn-primary">Remove a movie from favorites</a>
+            <a href="{{ url_for('create_user') }}" class="btn btn-primary">Create an user</a>
+            <a href="{{ url_for('delete_user') }}" class="btn btn-primary">Delete an user</a>
+            <a href="{{ url_for('sign_out') }}" class="btn btn-primary">Sign Out</a>
+        </div>
     </div>
 {% endblock %}
 

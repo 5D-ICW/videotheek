@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="flex flex-col justify-center text-center items-center justify-items-center gap-4 sm:p-20">
+        <h1>Delete an user</h1>
+        <form action="{{ url_for('delete_user') }}" method="post" class="flex flex-col w-1/5">
+            <label>
+                <input type="text" name="username" placeholder="Username" required class="border p-2 rounded-2xl">
+            </label>
+            <input type="submit" value="Delete user" class="mt-1">
+        </form>
+    </div>
+{% endblock %}
+
+
