@@ -8,6 +8,11 @@
     <nav>
         <a href="{{ url_for('home') }}">Home</a>
         <a href="{{ url_for('fav') }}">Favorites</a>
+        {% if signedIn %}
+            <a href="{{ url_for('panel') }}">Panel</a>
+        {% else %}
+            <a href="{{ url_for('signin') }}">Login</a>
+        {% endif %}
     </nav>
     <div>
         {% block content %}{% endblock %}

@@ -1,6 +1,6 @@
 import sqlite3
 
-from flask import Flask, render_template, request, url_for, redirect, abort, session, flash
+from flask import Flask, render_template, request, url_for, redirect, abort, session
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -11,8 +11,14 @@ def get_db_connection():
 
 
 app = Flask(__name__)
-app.secret_key = "super secret key"
+app.secret_key = "vwkmRR6oDO6ug9E5h2rQOwUMFTc="
 
+@app.context_processor
+def inject_signed_in():
+    signed_in = False
+    if "user_id" in session:
+        signed_in = True
+    return dict(signedIn=signed_in)
 
 @app.route('/')
 def home():
@@ -94,8 +100,7 @@ def create_user():
 @app.route("/signout")
 def signout():
     session.pop("user_id", None)  # Remove user session
-    flash("You have been logged out.", "info")  # Optional message
-    return redirect(url_for("signin"))  # Redirect to login page
+    return redirect(url_for("signin"))
 
 
 if __name__ == '__main__':
