@@ -50,12 +50,17 @@ def fav():
 
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
+    if "user_id" in session:
+        return redirect(url_for("panel"))
+
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
         conn = get_db_connection()
         user = conn.execute('SELECT password, klant_id FROM klanten WHERE email = ?', [email]).fetchone()
+        if not user:
+            return abort(401)
         rol = conn.execute('SELECT rol FROM rol WHERE klant_id = ?', [user[1]]).fetchone()
         conn.close()
 
@@ -63,11 +68,9 @@ def signin():
             session["user_id"] = user[1]
             if rol:
                 session["rol"] = rol[0]
-                if session["rol"] == "ADMIN":
-                    return redirect(url_for("panel"))
             else:
                 session['rol'] = "CLIENT"
-            return redirect(url_for("fav"))
+            return redirect(url_for("panel"))
         else:
             abort(401)
 
@@ -77,7 +80,7 @@ def signin():
 @app.route('/panel')
 def panel():
     if "user_id" not in session:
-        abort(401)
+        return redirect(url_for("signin"))
 
     return render_template('panel.html')
 
@@ -85,10 +88,10 @@ def panel():
 @app.route('/panel/create', methods=['GET', 'POST'])
 def create_user():
     if "user_id" not in session:
-        abort(401)
+        return redirect(url_for("signin"))
 
     if session["rol"] != "ADMIN":
-        abort(401)
+        return redirect(url_for("signin"))
 
     if request.method == 'POST':
         name = request.form["name"]
@@ -112,10 +115,10 @@ def create_user():
 @app.route('/panel/delete', methods=['GET', 'POST'])
 def delete_user():
     if "user_id" not in session:
-        abort(401)
+        return redirect(url_for("signin"))
 
     if session["rol"] != "ADMIN":
-        abort(401)
+        return redirect(url_for("signin"))
 
     if request.method == 'POST':
         email = request.form['email']
@@ -136,7 +139,7 @@ def delete_user():
 @app.route('/panel/add', methods=['GET', 'POST'])
 def add_movie():
     if "user_id" not in session:
-        abort(401)
+        return redirect(url_for("signin"))
 
     if request.method == 'POST':
         title = request.form['title']
