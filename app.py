@@ -190,6 +190,7 @@ def add_movie():
         genre = request.form['genre']
         year = request.form['year']
         director = request.form['director']
+        description = request.form['description']
 
         conn = get_db_connection()
         movie = conn.execute('SELECT * FROM films WHERE titel = ?', [title]).fetchone()
@@ -197,7 +198,7 @@ def add_movie():
             # TODO: Show error message
             return abort(500)
 
-        conn.execute('INSERT INTO films (titel, genre, releasejaar, regisseur) VALUES (?, ?, ?, ?)', (title, genre, year, director))
+        conn.execute('INSERT INTO films (titel, genre, releasejaar, regisseur, beschrijving) VALUES (?, ?, ?, ?, ?)', (title, genre, year, director, description))
         conn.commit()
         conn.close()
         return redirect(url_for('panel'))
