@@ -9,14 +9,15 @@
 <nav class="p-1">
     <a href="{{ url_for('home') }}">Home</a>
     {% if signedIn %}
-        <a href="{{ url_for('fav') }}">Favorites</a>
+        <a href="{{ url_for('movies') }}">Movies</a>
+        <a href="{{  url_for('search') }}">Search</a>
     {% endif %}
     {% if signedIn and rol == "ADMIN" %}
         <a href="{{ url_for('panel') }}">Panel</a>
     {% elif signedIn %}
         <a href="{{ url_for('sign_out') }}">Sign Out</a>
     {% else %}
-        <a href="{{ url_for('signin') }}">Sign In</a>
+        <a href="{{ url_for('sign_in') }}">Sign In</a>
     {% endif %}
 </nav>
 <div>

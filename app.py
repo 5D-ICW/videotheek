@@ -27,9 +27,12 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/favorites', methods=['GET', 'POST'])
-def fav():
+@app.route('/movies', methods=['GET', 'POST'])
+def movies():
     if request.method == 'POST':
+        if not "user_id" in session:
+            abort(403)
+
         action = request.form['action']
         film_id = request.form['film_id']
 
@@ -43,24 +46,31 @@ def fav():
         conn.commit()
         conn.close()
 
-        return redirect(url_for('fav'))
-
+        return redirect(url_for('movies'))
 
     if not "user_id" in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
+
+    alleen_favorieten = request.args.get('alleen_favorieten', False)
 
     conn = get_db_connection()
-    films = conn.execute('SELECT * FROM films').fetchall()
+    films = []
+    if alleen_favorieten:
+        films = conn.execute('SELECT * FROM films WHERE film_id IN (SELECT film_id FROM favorieten WHERE klant_id = ?)', (session["user_id"],)).fetchall()
+
+    else:
+        films = conn.execute('SELECT * FROM films').fetchall()
+
     favorieten = conn.execute('SELECT * FROM favorieten WHERE klant_id = ?', (session["user_id"],)).fetchall()
     conn.close()
 
 
-    return render_template('fav.html', films=films, favorieten=favorieten)
+    return render_template('movies.html', films=films, favorieten=favorieten, alleen_favorieten=alleen_favorieten)
 
 @app.route('/delete-film', methods=['POST'])
 def delete_film():
     if not "user_id" in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if session["rol"] != "ADMIN":
         abort(403)
@@ -71,15 +81,15 @@ def delete_film():
     conn.execute('DELETE FROM films WHERE film_id = ?', (film_id,))
     conn.commit()
     conn.close()
-    return redirect(url_for('fav'))
+    return redirect(url_for('movies'))
 
 
 @app.route('/signin', methods=['GET', 'POST'])
-def signin():
+def sign_in():
     if "user_id" in session:
         if session["rol"] == "ADMIN":
             return redirect(url_for("panel"))
-        return redirect(url_for("fav"))
+        return redirect(url_for("movies"))
 
     if request.method == 'POST':
         email = request.form['email']
@@ -108,10 +118,10 @@ def signin():
 @app.route('/panel')
 def panel():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if session["rol"] != "ADMIN":
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     return render_template('panel.html')
 
@@ -119,10 +129,10 @@ def panel():
 @app.route('/panel/create', methods=['GET', 'POST'])
 def create_user():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if session["rol"] != "ADMIN":
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if request.method == 'POST':
         name = request.form["name"]
@@ -146,10 +156,10 @@ def create_user():
 @app.route('/panel/delete', methods=['GET', 'POST'])
 def delete_user():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if session["rol"] != "ADMIN":
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if request.method == 'POST':
         email = request.form['email']
@@ -170,10 +180,10 @@ def delete_user():
 @app.route('/panel/add', methods=['GET', 'POST'])
 def add_movie():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if session["rol"] != "ADMIN":
-         return redirect(url_for("signin"))
+         return redirect(url_for("sign_in"))
 
     if request.method == 'POST':
         title = request.form['title']
@@ -197,10 +207,10 @@ def add_movie():
 @app.route("/signout")
 def sign_out():
     session.pop("user_id", None)  # Remove user session
-    return redirect(url_for("signin"))
+    return redirect(url_for("sign_in"))
 
 @app.route('/search')
-def search():  # put application's code here
+def search():
     conn = get_db_connection()
     films = conn.execute('SELECT * FROM films').fetchall()
     conn.close()
