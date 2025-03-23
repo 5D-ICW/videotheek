@@ -1,6 +1,6 @@
 import sqlite3
 
-from flask import Flask, render_template, request, url_for, redirect, abort, session
+from flask import Flask, render_template, request, url_for, redirect, abort, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -151,7 +151,7 @@ def create_user():
         conn.close()
         return redirect(url_for('panel'))
 
-    return render_template('create-user.html')
+    return render_template('create_user.html')
 
 @app.route('/panel/delete', methods=['GET', 'POST'])
 def delete_user():
@@ -175,7 +175,7 @@ def delete_user():
         conn.close()
         return redirect(url_for('panel'))
 
-    return render_template('delete-user.html')
+    return render_template('delete_user.html')
 
 @app.route('/panel/add', methods=['GET', 'POST'])
 def add_movie():
@@ -215,6 +215,43 @@ def search():
     films = conn.execute('SELECT * FROM films').fetchall()
     conn.close()
     return render_template('search.html', posts=films)
+
+@app.route('/<int:film_id>/review', methods=('GET', 'POST'))
+def review(film_id):
+    if request.method == 'POST':
+        rating = request.form['rating']
+        recensie = request.form['recensie']
+
+        conn = get_db_connection()
+        film = conn.execute('SELECT * FROM reviews WHERE klant_id = ? AND film_id = ?', (session["user_id"], film_id)).fetchone()
+
+        if film:
+            film = conn.execute('SELECT * FROM films WHERE films.film_id = ?',
+                                (film_id,)).fetchone()
+            conn.close()
+
+            return render_template('reviews.html', film=film, error="Error: You already wrote a review for this movie")
+
+        conn.execute('INSERT INTO reviews (klant_id, film_id, rating, recensie) VALUES (?, ?, ?, ?)',(session["user_id"], film_id, rating, recensie))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('get_info', film_id=film_id))
+
+    conn = get_db_connection()
+    film = conn.execute('SELECT * FROM films WHERE films.film_id = ?',
+                        (film_id,)).fetchone()
+    conn.close()
+
+    return render_template('reviews.html', film=film)
+
+@app.route('/<int:film_id>')
+def get_info(film_id):
+    conn = get_db_connection()
+    reviews = conn.execute('SELECT * FROM reviews WHERE film_id = ?', (film_id,)).fetchall()
+    film = conn.execute('SELECT * FROM films WHERE films.film_id = ?',
+                        (film_id,)).fetchone()
+    conn.close()
+    return render_template('film_info.html', film=film, reviews=reviews)
 
 if __name__ == '__main__':
     app.run()
