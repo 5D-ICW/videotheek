@@ -1,14 +1,28 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>Favorites</h1>
-    {% for film in films %}
-        <h2>{{ film['titel'] }}</h2>
-        </a>
-        <span class="badge badge-primary">{{ film['releasejaar'] }}</span>
-        <span class="badge badge-secondary">{{ film['genre'] }}</span>
-        <hr>
-    {% endfor %}
+    <div class="mx-2">
+        <div class="flex flex-row justify-content-between items-center">
+            <h1>Favorites</h1>
+            <a href="{{ url_for('add_movie') }}" class="btn btn-primary">Add a movie</a>
+        </div>
+        {% for film in films %}
+            <h2>{{ film['titel'] }}</h2>
+
+            <div class="flex flex-row justify-content-between items-center">
+                <div>
+                    <span class="badge badge-primary">{{ film['releasejaar'] }}</span>
+                    <span class="badge badge-secondary">{{ film['genre'] }}</span>
+                    <span class="badge badge-primary">{{ film['regisseur'] }}</span>
+                </div>
+                <form action="{{ url_for('delete_favorite') }}" method="post">
+                    <input type="hidden" name="id" value="{{ film['film_id'] }}">
+                    <button type="submit" class="btn btn-danger delete-button">Delete</button>
+                </form>
+            </div>
+            <hr>
+        {% endfor %}
+    </div>
 {% endblock %}
 
 

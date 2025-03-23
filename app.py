@@ -29,23 +29,28 @@ def home():
 
 @app.route('/favorites')
 def fav():
+    if not "user_id" in session:
+        return redirect(url_for("signin"))
+
     conn = get_db_connection()
-    films = conn.execute('SELECT * FROM films').fetchall()
-    verhuur_rows = conn.execute('SELECT * FROM verhuur').fetchall()
+    films = conn.execute('SELECT * FROM films WHERE klant_id = ?', (session["user_id"],)).fetchall()
     conn.close()
 
-    klanten = {}
-    for verhuur in verhuur_rows:
-        film_id = verhuur['film_id']
-        klant_id = verhuur['klant_id']
-        if film_id not in klanten:
-            klanten[film_id] = []
-        klanten[film_id].append(klant_id)
 
-    for film_id in klanten:
-        klanten[film_id].sort()
+    return render_template('fav.html', films=films)
 
-    return render_template('fav.html', films=films, klanten=klanten)
+@app.route('/delete-film', methods=['POST'])
+def delete_favorite():
+    if not "user_id" in session:
+        return redirect(url_for("signin"))
+
+    film_id = request.form['id']
+
+    conn = get_db_connection()
+    conn.execute('DELETE FROM films WHERE film_id = ?', (film_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('fav'))
 
 
 @app.route('/signin', methods=['GET', 'POST'])
@@ -165,6 +170,12 @@ def sign_out():
     session.pop("user_id", None)  # Remove user session
     return redirect(url_for("signin"))
 
+@app.route('/search')
+def search():  # put application's code here
+    conn = get_db_connection()
+    films = conn.execute('SELECT * FROM films').fetchall()
+    conn.close()
+    return render_template('search.html', posts=films)
 
 if __name__ == '__main__':
     app.run()
