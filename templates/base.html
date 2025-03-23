@@ -1,21 +1,25 @@
 <!doctype html>
-  <head>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>{% block title %} Films {% endblock %}</title>
-  </head>
-  <body>
-    <nav>
-        <a href="{{ url_for('home') }}">Home</a>
+</head>
+<body>
+<nav class="p-1">
+    <a href="{{ url_for('home') }}">Home</a>
+    {% if signedIn %}
         <a href="{{ url_for('fav') }}">Favorites</a>
-        {% if signedIn %}
-            <a href="{{ url_for('panel') }}">Panel</a>
-        {% else %}
-            <a href="{{ url_for('signin') }}">Login</a>
-        {% endif %}
-    </nav>
-    <div>
-        {% block content %}{% endblock %}
-    </div>
-  </body>
-</html>
+    {% endif %}
+    {% if signedIn and rol == "ADMIN" %}
+        <a href="{{ url_for('panel') }}">Panel</a>
+    {% elif signedIn %}
+        <a href="{{ url_for('sign_out') }}">Sign Out</a>
+    {% else %}
+        <a href="{{ url_for('signin') }}">Sign In</a>
+    {% endif %}
+</nav>
+<div>
+    {% block content %}{% endblock %}
+</div>
+</body>

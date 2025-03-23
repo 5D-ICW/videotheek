@@ -27,22 +27,43 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/favorites')
+@app.route('/favorites', methods=['GET', 'POST'])
 def fav():
+    if request.method == 'POST':
+        action = request.form['action']
+        film_id = request.form['film_id']
+
+        conn = get_db_connection()
+        if action == "add":
+            conn.execute('INSERT INTO favorieten (klant_id, film_id) VALUES (?, ?)', (session["user_id"], film_id))
+
+        if action == "remove":
+            conn.execute('DELETE FROM favorieten WHERE klant_id = ? AND film_id = ?', (session["user_id"], film_id))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('fav'))
+
+
     if not "user_id" in session:
         return redirect(url_for("signin"))
 
     conn = get_db_connection()
-    films = conn.execute('SELECT * FROM films WHERE klant_id = ?', (session["user_id"],)).fetchall()
+    films = conn.execute('SELECT * FROM films').fetchall()
+    favorieten = conn.execute('SELECT * FROM favorieten WHERE klant_id = ?', (session["user_id"],)).fetchall()
     conn.close()
 
 
-    return render_template('fav.html', films=films)
+    return render_template('fav.html', films=films, favorieten=favorieten)
 
 @app.route('/delete-film', methods=['POST'])
-def delete_favorite():
+def delete_film():
     if not "user_id" in session:
         return redirect(url_for("signin"))
+
+    if session["rol"] != "ADMIN":
+        abort(403)
 
     film_id = request.form['id']
 
@@ -56,7 +77,9 @@ def delete_favorite():
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
     if "user_id" in session:
-        return redirect(url_for("panel"))
+        if session["rol"] == "ADMIN":
+            return redirect(url_for("panel"))
+        return redirect(url_for("fav"))
 
     if request.method == 'POST':
         email = request.form['email']
@@ -85,6 +108,9 @@ def signin():
 @app.route('/panel')
 def panel():
     if "user_id" not in session:
+        return redirect(url_for("signin"))
+
+    if session["rol"] != "ADMIN":
         return redirect(url_for("signin"))
 
     return render_template('panel.html')
@@ -145,6 +171,9 @@ def delete_user():
 def add_movie():
     if "user_id" not in session:
         return redirect(url_for("signin"))
+
+    if session["rol"] != "ADMIN":
+         return redirect(url_for("signin"))
 
     if request.method == 'POST':
         title = request.form['title']
