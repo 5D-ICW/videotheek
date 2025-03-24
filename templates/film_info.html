@@ -1,41 +1,46 @@
 {% extends 'base.html' %}
-
-{% block title %}{{ film['titel'] }} - Film Details{% endblock %}
-
+{% block title %}
+  {{ film['titel'] }}
+  - Film Details
+{% endblock %}
 {% block content %}
-    <div class="mx-2">
-        <h1>{{ film['titel'] }}</h1>
-        <p><strong>Genre:</strong> {{ film['genre'] }}</p>
-        <p><strong>Release Year:</strong> {{ film['releasejaar'] }}</p>
-        <p><strong>Director:</strong> {{ film['regisseur'] }}</p>
-        <h3>Description</h3>
-        <p>{{ film['beschrijving'] }}</p>
+  <div class="mx-2">
+    <h1>{{ film['titel'] }}</h1>
+    <p><strong>Genre:</strong> {{ film['genre'] }}</p>
+    <p><strong>Release Year:</strong> {{ film['releasejaar'] }}</p>
+    <p><strong>Director:</strong> {{ film['regisseur'] }}</p>
+    <h3>Description</h3>
+    <p>{{ film['beschrijving'] }}</p>
 
-        <div class="flex flex-row items-center justify-content-between">
-            <h2>Reviews</h2>
-            <a href="{{ url_for('review', film_id=film['film_id']) }}" class="btn btn-primary">Add Review</a>
-        </div>
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Rating:</th>
-                <th>Review:</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% if reviews %}
-                {% for review in reviews %}
-                    <tr>
-                        <td>{{ review['rating'] }}</td>
-                        <td>{{ review['recensie'] }}</td>
-                    </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="2">No reviews available for this film.</td>
-                </tr>
-            {% endif %}
-            </tbody>
-        </table>
+    <div class="flex flex-row items-center justify-content-between">
+      <h2>Reviews</h2>
+      <a
+        href="{{ url_for('review', film_id=film['film_id']) }}"
+        class="btn btn-primary"
+        >Add Review</a
+      >
     </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Rating:</th>
+          <th>Review:</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if reviews %}
+          {% for review in reviews %}
+            <tr>
+              <td>{{ review['rating'] }}</td>
+              <td>{{ review['recensie'] }}</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="2">No reviews available for this film.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
 {% endblock %}

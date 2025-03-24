@@ -3,21 +3,12 @@
   <div
     class="flex flex-col justify-center text-center items-center justify-items-center gap-4 sm:p-20"
   >
-    <h1>Create a user</h1>
+    <h1>Register</h1>
     <form
-      action="{{ url_for('create_user') }}"
+      action="{{ url_for('sign_in') }}"
       method="post"
       class="flex flex-col w-1/5"
     >
-      <label>
-        <input
-          type="text"
-          name="name"
-          placeholder="Name"
-          required
-          class="border p-2 rounded-2xl"
-        />
-      </label>
       <label>
         <input
           type="email"
@@ -36,13 +27,7 @@
           class="border p-2 rounded-2xl"
         />
       </label>
-      <div
-        class="flex flex-row gap-1 justify-center text-center items-center justify-items-center"
-      >
-        <input type="checkbox" name="admin" class="border p-2" />
-        <label for="admin">Admin</label>
-      </div>
-      <input type="submit" value="Create user" class="mt-1" />
+      <input type="submit" value="Sign in" class="mt-1" />
     </form>
   </div>
 {% endblock %}
