@@ -1,4 +1,5 @@
 <!doctype html>
+
 <head>
   <link
     rel="stylesheet"
@@ -9,6 +10,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
   <title>{% block title %}Films{% endblock %}</title>
 </head>
+
 <body>
   <nav class="p-1">
     <a href="{{ url_for('home') }}">Home</a>
@@ -21,6 +23,7 @@
       <a href="{{ url_for('sign_out') }}">Sign Out</a>
     {% else %}
       <a href="{{ url_for('sign_in') }}">Sign In</a>
+      <a href="{{ url_for('sign_up') }}">Sign Up</a>
     {% endif %}
   </nav>
   <div>{% block content %}{% endblock %}</div>
