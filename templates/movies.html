@@ -1,73 +1,105 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <div class="mx-2">
-        <div class="flex flex-row justify-content-between items-center">
-            <h1>Movies</h1>
-            <div class="flex flex-row gap-1">
-                {% if not alleen_favorieten %}
-                    <a href="{{ url_for('movies', alleen_favorieten=true) }}" class="btn btn-primary">Only show
-                        favorites</a>
-                {% else %}
-                    <a href="{{ url_for('movies') }}" class="btn btn-primary">Show all</a>
-                {% endif %}
-                {% if rol == "ADMIN" %}
-                    <a href="{{ url_for('add_movie') }}" class="btn btn-primary">Add a movie</a>
-                {% endif %}
-            </div>
+  <div class="mx-2">
+    <div class="flex flex-row justify-content-between items-center">
+      <h1>Movies</h1>
+      {% if rol == "ADMIN" %}
+        <a href="{{ url_for('add_movie') }}" class="btn btn-primary"
+          >Add a movie</a
+        >
+      {% endif %}
+    </div>
+
+    <form
+      action="{{ url_for('movies') }}"
+      method="GET"
+      class="flex flex-row items-center justify-end gap-2"
+    >
+      <label class="mr-auto">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search..." />
+      </label>
+      <label class="mt-1.5 mr-2">
+        Only show favorites:
+        <input
+          type="checkbox"
+          name="alleen_favorieten"
+          {% if alleen_favorieten == "on" %}checked{% endif %}
+        />
+      </label>
+      <label class="mt-1.5"
+        >Sort by:
+        <select name="sort">
+          <option value="film_id" {% if sort == "film_id" %}selected{% endif %}>
+            Default
+          </option>
+          <option value="titel" {% if sort == "titel" %}selected{% endif %}>
+            Title
+          </option>
+          <option
+            value="releasejaar"
+            {% if sort == "releasejaar" %}selected{% endif %}
+          >
+            Release year
+          </option>
+        </select>
+      </label>
+
+      <input type="submit" value="Toepassen" class="btn btn-primary" />
+    </form>
+
+    {% for film in films %}
+      <h2>
+        <a href="{{ url_for("get_info", film_id=film['film_id']) }}"
+          >{{ film['titel'] }}</a
+        >
+      </h2>
+
+      <div class="flex flex-row justify-content-between items-center">
+        <div>
+          <span class="badge badge-primary">{{ film['releasejaar'] }}</span>
+          <span class="badge badge-secondary">{{ film['genre'] }}</span>
+          <span class="badge badge-primary">{{ film['regisseur'] }}</span>
         </div>
 
-        <form action="{{ url_for('movies') }}" method="GET" class="flex flex-row items-center justify-end gap-2">
-            <label class="mr-auto">
-                <input type="text" name="q" placeholder="Zoek...">
-            </label>
+        <div class="flex flex-row gap-1">
+          {% if film['film_id'] in favorieten|map(attribute='film_id') %}
+            <form action="{{ url_for('movies') }}" method="post">
+              <input type="hidden" name="action" value="remove" />
+              <input
+                type="hidden"
+                name="film_id"
+                value="{{ film['film_id'] }}"
+              />
+              <button type="submit" class="btn btn-primary delete-button">
+                Remove from favorites
+              </button>
+            </form>
+          {% else %}
+            <form action="{{ url_for('movies') }}" method="post">
+              <input type="hidden" name="action" value="add" />
+              <input
+                type="hidden"
+                name="film_id"
+                value="{{ film['film_id'] }}"
+              />
+              <button type="submit" class="btn btn-primary delete-button">
+                Add to favorites
+              </button>
+            </form>
+          {% endif %}
 
-            <label for="sort">Sorteren op:</label>
-            <select name="sort">
-                <option value="">Standaard</option>
-                <option value="title">Titel</option>
-                <option value="year">Releasejaar</option>
-            </select>
-
-            <input type="submit" value="Toepassen" class="btn btn-primary">
-        </form>
-
-        {% for film in films %}
-            <h2><a href="{{ url_for("get_info", film_id=film['film_id']) }}">{{ film['titel'] }}</a></h2>
-
-            <div class="flex flex-row justify-content-between items-center">
-                <div>
-                    <span class="badge badge-primary">{{ film['releasejaar'] }}</span>
-                    <span class="badge badge-secondary">{{ film['genre'] }}</span>
-                    <span class="badge badge-primary">{{ film['regisseur'] }}</span>
-                </div>
-
-                <div class="flex flex-row gap-1">
-                    {% if film['film_id'] in favorieten|map(attribute='film_id') %}
-                        <form action="{{ url_for('movies') }}" method="post">
-                            <input type="hidden" name="action" value="remove">
-                            <input type="hidden" name="film_id" value="{{ film['film_id'] }}">
-                            <button type="submit" class="btn btn-primary delete-button">Remove from favorites</button>
-                        </form>
-                    {% else %}
-                        <form action="{{ url_for('movies') }}" method="post">
-                            <input type="hidden" name="action" value="add">
-                            <input type="hidden" name="film_id" value="{{ film['film_id'] }}">
-                            <button type="submit" class="btn btn-primary delete-button">Add to favorites</button>
-                        </form>
-                    {% endif %}
-
-                    {% if rol == "ADMIN" %}
-                        <form action="{{ url_for('delete_film') }}" method="post">
-                            <input type="hidden" name="id" value="{{ film['film_id'] }}">
-                            <button type="submit" class="btn btn-danger delete-button">Delete</button>
-                        </form>
-                    {% endif %}
-                </div>
-            </div>
-            <hr>
-        {% endfor %}
-    </div>
+          {% if rol == "ADMIN" %}
+            <form action="{{ url_for('delete_film') }}" method="post">
+              <input type="hidden" name="id" value="{{ film['film_id'] }}" />
+              <button type="submit" class="btn btn-danger delete-button">
+                Delete
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+      <hr />
+    {% endfor %}
+  </div>
 {% endblock %}
-
-

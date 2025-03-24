@@ -1,27 +1,27 @@
 {% extends 'base.html' %}
-
 {% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <meta charset="UTF-8">
-    <title>Videotheek</title>
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/style.css') }}"
+  />
+  <meta charset="UTF-8" />
+  <title>Videotheek</title>
 {% endblock %}
-
 {% block content %}
-    <h1>Online Videotheek</h1>
-    <form>
-        <label>
-            <input type="text" name="filter_input" placeholder="Zoek...">
-        </label>
+  <h1>Online Videotheek</h1>
+  <form>
+    <label>
+      <input type="text" name="filter_input" placeholder="Zoek..." />
+    </label>
 
-        <label for="sort">Sorteren op:</label>
-        <select name="sort">
-            <option value="title">Titel</option>
-            <option value="year">Releasejaar</option>
-        </select>
+    <label for="sort">Sorteren op:</label>
+    <select name="sort">
+      <option value="title">Titel</option>
+      <option value="year">Releasejaar</option>
+    </select>
 
-        <input type="submit" value="Zoek">
-    </form>
+    <input type="submit" value="Zoek" />
+  </form>
 
-    <div class="film-container" id="filmList"></div>
-
+  <div class="film-container" id="filmList"></div>
 {% endblock %}

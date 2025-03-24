@@ -175,6 +175,7 @@ cython_debug/
 
 # NPM
 /package-lock.json
+/node_modules/
 
 # Tailwind CSS Output
 /static/style.css
