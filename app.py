@@ -158,6 +158,42 @@ def sign_in():
     return render_template("signin.html")
 
 
+@app.route("/signup", methods=["GET", "POST"])
+def sign_up():
+    if "user_id" in session:
+        if session["rol"] == "ADMIN":
+            return redirect(url_for("panel"))
+        return redirect(url_for("movies"))
+
+    if request.method == "POST":
+        name = request.form["name"]
+        email = request.form["email"]
+        password = request.form["password"]
+        hashed_password = generate_password_hash(password)
+
+        conn = get_db_connection()
+        user = conn.execute("SELECT * FROM klanten WHERE email = ?", [email]).fetchone()
+        if user:
+            # TODO: Show error message
+            return abort(500)
+
+        conn.execute(
+            "INSERT INTO klanten (naam, email, password) VALUES (?, ?, ?);",
+            (name, email, hashed_password),
+        )
+        conn.commit()
+        user = conn.execute(
+            "SELECT klant_id FROM klanten WHERE email = ?", [email]
+        ).fetchone()
+        conn.close()
+
+        session["user_id"] = user[0]
+        session["rol"] = "CLIENT"
+        return redirect(url_for("panel"))
+
+    return render_template("signup.html")
+
+
 @app.route("/panel")
 def panel():
     if "user_id" not in session:
@@ -181,6 +217,8 @@ def create_user():
         name = request.form["name"]
         email = request.form["email"]
         password = request.form["password"]
+        admin = request.form.get("admin", "off")
+
         hashed_password = generate_password_hash(password)
 
         conn = get_db_connection()
@@ -193,11 +231,32 @@ def create_user():
             "INSERT INTO klanten (naam, email, password) VALUES (?, ?, ?);",
             (name, email, hashed_password),
         )
+        if admin == "on":
+            conn.execute(
+                "INSERT INTO rol (klant_id, rol) VALUES ((SELECT klant_id FROM klanten WHERE email = ?), 'ADMIN');",
+                [email],
+            )
+
         conn.commit()
         conn.close()
         return redirect(url_for("panel"))
 
     return render_template("create_user.html")
+
+
+@app.route("/panel/list")
+def list_users():
+    if "user_id" not in session:
+        return redirect(url_for("sign_in"))
+
+    if session["rol"] != "ADMIN":
+        return redirect(url_for("sign_in"))
+
+    conn = get_db_connection()
+    users = conn.execute("SELECT * FROM klanten").fetchall()
+    conn.close()
+
+    return render_template("list-users.html", users=users)
 
 
 @app.route("/panel/delete", methods=["GET", "POST"])
