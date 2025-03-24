@@ -10,7 +10,6 @@
     <a href="{{ url_for('home') }}">Home</a>
     {% if signedIn %}
         <a href="{{ url_for('movies') }}">Movies</a>
-        <a href="{{  url_for('search') }}">Search</a>
     {% endif %}
     {% if signedIn and rol == "ADMIN" %}
         <a href="{{ url_for('panel') }}">Panel</a>

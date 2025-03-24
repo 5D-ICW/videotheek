@@ -51,15 +51,34 @@ def movies():
     if not "user_id" in session:
         return redirect(url_for("sign_in"))
 
-    alleen_favorieten = request.args.get('alleen_favorieten', False)
+    alleen_favorieten = request.args.get('alleen_favorieten')
+    q = request.args.get('q')
+    sort = request.args.get('sort')
+
+    # Begin van de query
+    query = "SELECT * FROM films"
+    params = []
+
+    # Als 'alleen_favorieten' is ingeschakeld, voeg een WHERE-conditie toe
+    if alleen_favorieten:
+        query += " WHERE film_id IN (SELECT film_id FROM favorieten WHERE klant_id = ?)"
+        params.append(session['user_id'])  # Zorg dat klant_id is gedefinieerd
+
+    # Als er een zoekterm (q) is, voeg deze toe aan de query
+    if q:
+        if "WHERE" in query:
+            query += " AND"
+        else:
+            query += " WHERE"
+        query += " titel LIKE ?"
+        params.append(f"%{q}%")  # Gebruik LIKE voor gedeeltelijke zoekopdrachten
+
+    # Sorteer indien nodig
+    if sort:
+        query += f" ORDER BY {sort}"
 
     conn = get_db_connection()
-    films = []
-    if alleen_favorieten:
-        films = conn.execute('SELECT * FROM films WHERE film_id IN (SELECT film_id FROM favorieten WHERE klant_id = ?)', (session["user_id"],)).fetchall()
-
-    else:
-        films = conn.execute('SELECT * FROM films').fetchall()
+    films = conn.execute(query, params).fetchall()
 
     favorieten = conn.execute('SELECT * FROM favorieten WHERE klant_id = ?', (session["user_id"],)).fetchall()
     conn.close()
@@ -209,13 +228,6 @@ def add_movie():
 def sign_out():
     session.pop("user_id", None)  # Remove user session
     return redirect(url_for("sign_in"))
-
-@app.route('/search')
-def search():
-    conn = get_db_connection()
-    films = conn.execute('SELECT * FROM films').fetchall()
-    conn.close()
-    return render_template('search.html', posts=films)
 
 @app.route('/<int:film_id>/review', methods=('GET', 'POST'))
 def review(film_id):

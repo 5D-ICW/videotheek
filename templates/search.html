@@ -8,24 +8,19 @@
 
 {% block content %}
     <h1>Online Videotheek</h1>
+    <form>
+        <label>
+            <input type="text" name="filter_input" placeholder="Zoek...">
+        </label>
 
-    <label for="filter">Filter op:</label>
-    <select id="filter">
-        <option value="">Geen filter</option>
-        <option value="title">Titel</option>
-        <option value="genre">Genre</option>
-        <option value="year">Releasejaar</option>
-    </select>
-    <input type="text" id="filterInput" placeholder="Zoek..." >
+        <label for="sort">Sorteren op:</label>
+        <select name="sort">
+            <option value="title">Titel</option>
+            <option value="year">Releasejaar</option>
+        </select>
 
-    <label for="sort">Sorteren op:</label>
-    <select id="sort" >
-        <option value="popularity">Populariteit</option>
-        <option value="title">Titel</option>
-        <option value="year">Releasejaar</option>
-    </select>
-
-    <button>Toepassen</button>
+        <input type="submit" value="Zoek">
+    </form>
 
     <div class="film-container" id="filmList"></div>
 
