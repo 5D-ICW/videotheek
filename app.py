@@ -1,6 +1,6 @@
 import sqlite3
 
-from flask import Flask, render_template, request, url_for, redirect, abort, session
+from flask import Flask, render_template, request, url_for, redirect, abort, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -27,31 +27,69 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/favorites')
-def fav():
+@app.route('/movies', methods=['GET', 'POST'])
+def movies():
+    if request.method == 'POST':
+        if not "user_id" in session:
+            abort(403)
+
+        action = request.form['action']
+        film_id = request.form['film_id']
+
+        conn = get_db_connection()
+        if action == "add":
+            conn.execute('INSERT INTO favorieten (klant_id, film_id) VALUES (?, ?)', (session["user_id"], film_id))
+
+        if action == "remove":
+            conn.execute('DELETE FROM favorieten WHERE klant_id = ? AND film_id = ?', (session["user_id"], film_id))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('movies'))
+
+    if not "user_id" in session:
+        return redirect(url_for("sign_in"))
+
+    alleen_favorieten = request.args.get('alleen_favorieten', False)
+
     conn = get_db_connection()
-    films = conn.execute('SELECT * FROM films').fetchall()
-    verhuur_rows = conn.execute('SELECT * FROM verhuur').fetchall()
+    films = []
+    if alleen_favorieten:
+        films = conn.execute('SELECT * FROM films WHERE film_id IN (SELECT film_id FROM favorieten WHERE klant_id = ?)', (session["user_id"],)).fetchall()
+
+    else:
+        films = conn.execute('SELECT * FROM films').fetchall()
+
+    favorieten = conn.execute('SELECT * FROM favorieten WHERE klant_id = ?', (session["user_id"],)).fetchall()
     conn.close()
 
-    klanten = {}
-    for verhuur in verhuur_rows:
-        film_id = verhuur['film_id']
-        klant_id = verhuur['klant_id']
-        if film_id not in klanten:
-            klanten[film_id] = []
-        klanten[film_id].append(klant_id)
 
-    for film_id in klanten:
-        klanten[film_id].sort()
+    return render_template('movies.html', films=films, favorieten=favorieten, alleen_favorieten=alleen_favorieten)
 
-    return render_template('fav.html', films=films, klanten=klanten)
+@app.route('/delete-film', methods=['POST'])
+def delete_film():
+    if not "user_id" in session:
+        return redirect(url_for("sign_in"))
+
+    if session["rol"] != "ADMIN":
+        abort(403)
+
+    film_id = request.form['id']
+
+    conn = get_db_connection()
+    conn.execute('DELETE FROM films WHERE film_id = ?', (film_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('movies'))
 
 
 @app.route('/signin', methods=['GET', 'POST'])
-def signin():
+def sign_in():
     if "user_id" in session:
-        return redirect(url_for("panel"))
+        if session["rol"] == "ADMIN":
+            return redirect(url_for("panel"))
+        return redirect(url_for("movies"))
 
     if request.method == 'POST':
         email = request.form['email']
@@ -80,7 +118,10 @@ def signin():
 @app.route('/panel')
 def panel():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
+
+    if session["rol"] != "ADMIN":
+        return redirect(url_for("sign_in"))
 
     return render_template('panel.html')
 
@@ -88,10 +129,10 @@ def panel():
 @app.route('/panel/create', methods=['GET', 'POST'])
 def create_user():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if session["rol"] != "ADMIN":
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if request.method == 'POST':
         name = request.form["name"]
@@ -110,15 +151,15 @@ def create_user():
         conn.close()
         return redirect(url_for('panel'))
 
-    return render_template('create-user.html')
+    return render_template('create_user.html')
 
 @app.route('/panel/delete', methods=['GET', 'POST'])
 def delete_user():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if session["rol"] != "ADMIN":
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
 
     if request.method == 'POST':
         email = request.form['email']
@@ -134,18 +175,22 @@ def delete_user():
         conn.close()
         return redirect(url_for('panel'))
 
-    return render_template('delete-user.html')
+    return render_template('delete_user.html')
 
 @app.route('/panel/add', methods=['GET', 'POST'])
 def add_movie():
     if "user_id" not in session:
-        return redirect(url_for("signin"))
+        return redirect(url_for("sign_in"))
+
+    if session["rol"] != "ADMIN":
+         return redirect(url_for("sign_in"))
 
     if request.method == 'POST':
         title = request.form['title']
         genre = request.form['genre']
         year = request.form['year']
         director = request.form['director']
+        description = request.form['description']
 
         conn = get_db_connection()
         movie = conn.execute('SELECT * FROM films WHERE titel = ?', [title]).fetchone()
@@ -153,7 +198,7 @@ def add_movie():
             # TODO: Show error message
             return abort(500)
 
-        conn.execute('INSERT INTO films (titel, genre, releasejaar, regisseur) VALUES (?, ?, ?, ?)', (title, genre, year, director))
+        conn.execute('INSERT INTO films (titel, genre, releasejaar, regisseur, beschrijving) VALUES (?, ?, ?, ?, ?)', (title, genre, year, director, description))
         conn.commit()
         conn.close()
         return redirect(url_for('panel'))
@@ -163,8 +208,51 @@ def add_movie():
 @app.route("/signout")
 def sign_out():
     session.pop("user_id", None)  # Remove user session
-    return redirect(url_for("signin"))
+    return redirect(url_for("sign_in"))
 
+@app.route('/search')
+def search():
+    conn = get_db_connection()
+    films = conn.execute('SELECT * FROM films').fetchall()
+    conn.close()
+    return render_template('search.html', posts=films)
+
+@app.route('/<int:film_id>/review', methods=('GET', 'POST'))
+def review(film_id):
+    if request.method == 'POST':
+        rating = request.form['rating']
+        recensie = request.form['recensie']
+
+        conn = get_db_connection()
+        film = conn.execute('SELECT * FROM reviews WHERE klant_id = ? AND film_id = ?', (session["user_id"], film_id)).fetchone()
+
+        if film:
+            film = conn.execute('SELECT * FROM films WHERE films.film_id = ?',
+                                (film_id,)).fetchone()
+            conn.close()
+
+            return render_template('reviews.html', film=film, error="Error: You already wrote a review for this movie")
+
+        conn.execute('INSERT INTO reviews (klant_id, film_id, rating, recensie) VALUES (?, ?, ?, ?)',(session["user_id"], film_id, rating, recensie))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('get_info', film_id=film_id))
+
+    conn = get_db_connection()
+    film = conn.execute('SELECT * FROM films WHERE films.film_id = ?',
+                        (film_id,)).fetchone()
+    conn.close()
+
+    return render_template('reviews.html', film=film)
+
+@app.route('/<int:film_id>')
+def get_info(film_id):
+    conn = get_db_connection()
+    reviews = conn.execute('SELECT * FROM reviews WHERE film_id = ?', (film_id,)).fetchall()
+    film = conn.execute('SELECT * FROM films WHERE films.film_id = ?',
+                        (film_id,)).fetchone()
+    conn.close()
+    return render_template('film_info.html', film=film, reviews=reviews)
 
 if __name__ == '__main__':
     app.run()
