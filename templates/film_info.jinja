@@ -32,7 +32,30 @@
           {% for review in reviews %}
             <tr>
               <td>{{ review['rating'] }}</td>
-              <td>{{ review['recensie'] }}</td>
+              <td>
+                <div class="flex flex-row justify-content-between">
+                  {{ review['recensie'] }}
+                  {% if rol == "ADMIN" %}
+                    <form action="{{ url_for('delete_review') }}" method="post">
+                      <input
+                        type="hidden"
+                        name="review_id"
+                        value="{{ review['review_id'] }}"
+                      />
+                      <input
+                        type="hidden" 
+                        name="film_id"
+                        value="{{ film['film_id'] }}"
+                      />
+                      <input
+                        type="submit"
+                        class="btn btn-danger"
+                        value="Delete"
+                      />
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
             </tr>
           {% endfor %}
         {% else %}

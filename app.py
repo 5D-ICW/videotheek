@@ -375,6 +375,21 @@ def get_info(film_id):
     return render_template("film_info.jinja", film=film, reviews=reviews)
 
 
+@app.route("/delete-review", methods=["POST"])
+def delete_review():
+    if not "user_id" in session or session["rol"] != "ADMIN":
+        abort(403)
+
+    review_id = request.form["review_id"]
+    film_id = request.form["film_id"]
+
+    conn = get_db_connection()
+    conn.execute("DELETE FROM reviews WHERE review_id = ?", (review_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for("get_info", film_id=film_id))
+
+
 # Make sure the script isn't run when it's imported, only when its ran as the main script.
 if __name__ == "__main__":
     app.run()
