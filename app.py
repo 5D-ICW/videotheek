@@ -42,7 +42,7 @@ def home():
 def movies():
     if request.method == "POST":
         # If you're not logged in, it will return a 403 error.
-        if not "user_id" in session or session["rol"] != "ADMIN":
+        if not "user_id" in session:
             abort(403)
 
         # Get the variables from the POST request.
