@@ -8,7 +8,8 @@
       "env": { "FLASK_APP": "app.py", "FLASK_DEBUG": "1" },
       "args": ["run"],
       "jinja": true,
-      "autoStartBrowser": false
+      "autoStartBrowser": false,
+      "preLaunchTask": "tailwind"
     }
   ]
 }

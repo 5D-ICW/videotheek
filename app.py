@@ -34,7 +34,7 @@ def inject_signed_in():
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    return render_template("home.jinja")
 
 
 @app.route("/movies", methods=["GET", "POST"])
@@ -68,7 +68,7 @@ def movies():
         return redirect(url_for("sign_in"))
 
     alleen_favorieten = request.args.get("alleen_favorieten", "off")
-    q = request.args.get("q", None)
+    q = request.args.get("q", "")
     sort = request.args.get("sort", "film_id")
 
     query = "SELECT * FROM films"
@@ -78,7 +78,7 @@ def movies():
         query += " WHERE film_id IN (SELECT film_id FROM favorieten WHERE klant_id = ?)"
         params.append(session["user_id"])
 
-    if q != None:
+    if q:
         if "WHERE" in query:
             query += " AND"
         else:
@@ -97,7 +97,7 @@ def movies():
     conn.close()
 
     return render_template(
-        "movies.html",
+        "movies.jinja",
         films=films,
         favorieten=favorieten,
         q=q,
@@ -155,7 +155,7 @@ def sign_in():
         else:
             abort(401)
 
-    return render_template("signin.html")
+    return render_template("signin.jinja")
 
 
 @app.route("/signup", methods=["GET", "POST"])
@@ -191,7 +191,7 @@ def sign_up():
         session["rol"] = "CLIENT"
         return redirect(url_for("panel"))
 
-    return render_template("signup.html")
+    return render_template("signup.jinja")
 
 
 @app.route("/panel")
@@ -202,7 +202,7 @@ def panel():
     if session["rol"] != "ADMIN":
         return redirect(url_for("sign_in"))
 
-    return render_template("panel.html")
+    return render_template("panel.jinja")
 
 
 @app.route("/panel/create", methods=["GET", "POST"])
@@ -241,7 +241,7 @@ def create_user():
         conn.close()
         return redirect(url_for("panel"))
 
-    return render_template("create_user.html")
+    return render_template("create_user.jinja")
 
 
 @app.route("/panel/list")
@@ -256,7 +256,7 @@ def list_users():
     users = conn.execute("SELECT * FROM klanten").fetchall()
     conn.close()
 
-    return render_template("list-users.html", users=users)
+    return render_template("list-users.jinja", users=users)
 
 
 @app.route("/panel/delete", methods=["GET", "POST"])
@@ -281,7 +281,7 @@ def delete_user():
         conn.close()
         return redirect(url_for("panel"))
 
-    return render_template("delete_user.html")
+    return render_template("delete_user.jinja")
 
 
 @app.route("/panel/add", methods=["GET", "POST"])
@@ -313,7 +313,7 @@ def add_movie():
         conn.close()
         return redirect(url_for("panel"))
 
-    return render_template("add-movie.html")
+    return render_template("add-movie.jinja")
 
 
 @app.route("/signout")
@@ -341,7 +341,7 @@ def review(film_id):
             conn.close()
 
             return render_template(
-                "reviews.html",
+                "reviews.jinja",
                 film=film,
                 error="Error: You already wrote a review for this movie",
             )
@@ -360,7 +360,7 @@ def review(film_id):
     ).fetchone()
     conn.close()
 
-    return render_template("reviews.html", film=film)
+    return render_template("reviews.jinja", film=film)
 
 
 @app.route("/<int:film_id>")
@@ -373,7 +373,7 @@ def get_info(film_id):
         "SELECT * FROM films WHERE films.film_id = ?", (film_id,)
     ).fetchone()
     conn.close()
-    return render_template("film_info.html", film=film, reviews=reviews)
+    return render_template("film_info.jinja", film=film, reviews=reviews)
 
 
 if __name__ == "__main__":

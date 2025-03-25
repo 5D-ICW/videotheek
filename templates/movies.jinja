@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base.jinja' %}
 
 {% block content %}
   <div class="mx-2">
@@ -24,28 +24,28 @@
         <input
           type="checkbox"
           name="alleen_favorieten"
-          {% if alleen_favorieten == "on" %}checked{% endif %}
+          {% if alleen_favorieten=="on" %}checked{% endif %}
         />
       </label>
       <label class="mt-1.5"
         >Sort by:
         <select name="sort">
-          <option value="film_id" {% if sort == "film_id" %}selected{% endif %}>
+          <option value="film_id" {% if sort=="film_id" %}selected{% endif %}>
             Default
           </option>
-          <option value="titel" {% if sort == "titel" %}selected{% endif %}>
+          <option value="titel" {% if sort=="titel" %}selected{% endif %}>
             Title
           </option>
           <option
             value="releasejaar"
-            {% if sort == "releasejaar" %}selected{% endif %}
+            {% if sort=="releasejaar" %}selected{% endif %}
           >
             Release year
           </option>
         </select>
       </label>
 
-      <input type="submit" value="Toepassen" class="btn btn-primary" />
+      <input type="submit" value="Apply" class="btn btn-primary" />
     </form>
 
     {% for film in films %}
