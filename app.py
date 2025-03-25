@@ -23,6 +23,7 @@ app = Flask(__name__)
 app.secret_key = "vwkmRR6oDO6ug9E5h2rQOwUMFTc="
 
 
+# This adds an jinja variable to every page you visit. It adds the sign in status and the role variables.
 @app.context_processor
 def inject_signed_in():
     signed_in = False
@@ -40,9 +41,11 @@ def home():
 @app.route("/movies", methods=["GET", "POST"])
 def movies():
     if request.method == "POST":
-        if not "user_id" in session:
+        # If you're not logged in, it will return a 403 error.
+        if not "user_id" in session or session["rol"] != "ADMIN":
             abort(403)
 
+        # Get the variables from the POST request.
         action = request.form["action"]
         film_id = request.form["film_id"]
 
@@ -64,28 +67,36 @@ def movies():
 
         return redirect(url_for("movies"))
 
+    # If you're not logged in, it will redirect you to the sign in page.
     if not "user_id" in session:
         return redirect(url_for("sign_in"))
 
+    # Get the variables from the URL parameters (GET request).
     alleen_favorieten = request.args.get("alleen_favorieten", "off")
     q = request.args.get("q", "")
     sort = request.args.get("sort", "film_id")
 
+    # Start the dynamic query
     query = "SELECT * FROM films"
     params = []
 
+    # If the user wants to see only the favorites, it will add a WHERE clause to the query. It will also add the required parameters.
     if alleen_favorieten == "on":
         query += " WHERE film_id IN (SELECT film_id FROM favorieten WHERE klant_id = ?)"
         params.append(session["user_id"])
 
     if q:
+        # If there is already a WHERE in the query, it will add an AND. Otherwise, it will add a WHERE.
         if "WHERE" in query:
             query += " AND"
         else:
             query += " WHERE"
         query += " LOWER(titel) LIKE LOWER(?)"
+
+        # The % is a wildcard in SQL. It will match any character. This is used to match any movie that contains the query.
         params.append(f"%{q}%")
 
+    # Add the sorting to the query. Sort is defaulted to film_id, so if it's not in the URL parameters, it will sort by film_id.
     query += f" ORDER BY {sort}"
 
     conn = get_db_connection()
@@ -106,13 +117,11 @@ def movies():
     )
 
 
+# Nothing special about this route. Just a POST request to delete movies.
 @app.route("/delete-film", methods=["POST"])
 def delete_film():
-    if not "user_id" in session:
+    if not "user_id" in session or session["rol"] != "ADMIN":
         return redirect(url_for("sign_in"))
-
-    if session["rol"] != "ADMIN":
-        abort(403)
 
     film_id = request.form["id"]
 
@@ -125,6 +134,7 @@ def delete_film():
 
 @app.route("/signin", methods=["GET", "POST"])
 def sign_in():
+    # Redirect to the panel when you're logged in as admin, otherwise redirect to the movies page.
     if "user_id" in session:
         if session["rol"] == "ADMIN":
             return redirect(url_for("panel"))
@@ -145,6 +155,7 @@ def sign_in():
         ).fetchone()
         conn.close()
 
+        # check_password_hash returns a boolean. If the hash matches the password, it will return True.
         if user and check_password_hash(user[0], password):
             session["user_id"] = user[1]
             if rol:
@@ -182,6 +193,7 @@ def sign_up():
             (name, email, hashed_password),
         )
         conn.commit()
+        # Re-read the user from the database to get the klant_id
         user = conn.execute(
             "SELECT klant_id FROM klanten WHERE email = ?", [email]
         ).fetchone()
@@ -196,10 +208,7 @@ def sign_up():
 
 @app.route("/panel")
 def panel():
-    if "user_id" not in session:
-        return redirect(url_for("sign_in"))
-
-    if session["rol"] != "ADMIN":
+    if "user_id" not in session or session["rol"] != "ADMIN":
         return redirect(url_for("sign_in"))
 
     return render_template("panel.jinja")
@@ -207,10 +216,7 @@ def panel():
 
 @app.route("/panel/create", methods=["GET", "POST"])
 def create_user():
-    if "user_id" not in session:
-        return redirect(url_for("sign_in"))
-
-    if session["rol"] != "ADMIN":
+    if "user_id" not in session or session["rol"] != "ADMIN":
         return redirect(url_for("sign_in"))
 
     if request.method == "POST":
@@ -246,10 +252,7 @@ def create_user():
 
 @app.route("/panel/list")
 def list_users():
-    if "user_id" not in session:
-        return redirect(url_for("sign_in"))
-
-    if session["rol"] != "ADMIN":
+    if "user_id" not in session or session["rol"] != "ADMIN":
         return redirect(url_for("sign_in"))
 
     conn = get_db_connection()
@@ -261,10 +264,7 @@ def list_users():
 
 @app.route("/panel/delete", methods=["GET", "POST"])
 def delete_user():
-    if "user_id" not in session:
-        return redirect(url_for("sign_in"))
-
-    if session["rol"] != "ADMIN":
+    if "user_id" not in session or session["rol"] != "ADMIN":
         return redirect(url_for("sign_in"))
 
     if request.method == "POST":
@@ -286,10 +286,7 @@ def delete_user():
 
 @app.route("/panel/add", methods=["GET", "POST"])
 def add_movie():
-    if "user_id" not in session:
-        return redirect(url_for("sign_in"))
-
-    if session["rol"] != "ADMIN":
+    if "user_id" not in session or session["rol"] != "ADMIN":
         return redirect(url_for("sign_in"))
 
     if request.method == "POST":
@@ -301,6 +298,7 @@ def add_movie():
 
         conn = get_db_connection()
         movie = conn.execute("SELECT * FROM films WHERE titel = ?", [title]).fetchone()
+        # If the movie is already in the database, it will return a 500 error.
         if movie:
             # TODO: Show error message
             return abort(500)
@@ -318,7 +316,8 @@ def add_movie():
 
 @app.route("/signout")
 def sign_out():
-    session.pop("user_id", None)  # Remove user session
+    # The None is needed, because if there is no None and the user_id is not logged in it would throw an error. Now it just returns None.
+    session.pop("user_id", None)
     return redirect(url_for("sign_in"))
 
 
@@ -376,5 +375,6 @@ def get_info(film_id):
     return render_template("film_info.jinja", film=film, reviews=reviews)
 
 
+# Make sure the script isn't run when it's imported, only when its ran as the main script.
 if __name__ == "__main__":
     app.run()
