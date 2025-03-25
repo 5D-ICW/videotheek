@@ -1,36 +1,30 @@
 {% extends 'base.jinja' %}
-
-<!doctype html>
-<html lang="nl">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Online Videotheek</title>
-  </head>
-  <body>
-    <h1>Online Videotheek</h1>
-
-    <label for="filter">Filter op:</label>
-    <select id="filter">
-      <option value="">Geen filter</option>
-      <option value="title">Titel</option>
-      <option value="genre">Genre</option>
-      <option value="year">Releasejaar</option>
-    </select>
-    <input
-      type="text"
-      id="filterInput"
-      placeholder="Zoek..."
-      onkeyup="applyFilter()"
-    />
-
-    <label for="sort">Sorteren op:</label>
-    <select id="sort" onchange="applySort()">
-      <option value="popularity">Populariteit</option>
-      <option value="title">Titel</option>
-      <option value="year">Releasejaar</option>
-    </select>
-
-    <div class="film-container" id="filmList"></div>
-  </body>
-</html>
+{% block content %}
+  <div
+    class="flex flex-col justify-center text-center items-center justify-items-center gap-4 sm:p-20"
+  >
+    <h1>Videotheek</h1>
+    {% if signedIn %}
+      <p>
+        Welcome to our online video store. You are already signed in, so you can
+        access our content immediately!
+      </p>
+      <a href="{{ url_for('movies') }}" class="btn btn-primary"
+        >Browse Movies</a
+      >
+    {% else %}
+      <p>
+        Welcome to our online video store. Sign in, or create an account to get
+        started.
+      </p>
+      <div class="flex flex-row items-stretch gap-2 justify-center">
+        <a href="{{ url_for('sign_in') }}" class="btn btn-primary"
+          >I already have an account</a
+        >
+        <a href="{{ url_for('sign_up') }}" class="btn btn-primary"
+          >I need an account</a
+        >
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
