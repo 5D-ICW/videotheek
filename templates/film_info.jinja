@@ -13,7 +13,10 @@
     <p>{{ film['beschrijving'] }}</p>
 
     <div class="flex flex-row items-center justify-content-between">
-      <h2>Reviews</h2>
+      <div class="flex flex-col">
+        <h2>Reviews</h2>
+        <span>Average rating: {{ avg_rating }}</span>
+      </div>
       <a
         href="{{ url_for('review', film_id=film['film_id']) }}"
         class="btn btn-primary"
@@ -36,14 +39,18 @@
                 <div class="flex flex-row justify-content-between">
                   {{ review['recensie'] }}
                   {% if rol == "ADMIN" %}
-                    <form action="{{ url_for('delete_review') }}" method="post">
+                    <form
+                      action="{{ url_for('delete_review') }}"
+                      method="post"
+                      class="ml-auto"
+                    >
                       <input
                         type="hidden"
                         name="review_id"
                         value="{{ review['review_id'] }}"
                       />
                       <input
-                        type="hidden" 
+                        type="hidden"
                         name="film_id"
                         value="{{ film['film_id'] }}"
                       />

@@ -366,13 +366,23 @@ def review(film_id):
 def get_info(film_id):
     conn = get_db_connection()
     reviews = conn.execute(
-        "SELECT * FROM reviews WHERE film_id = ?", (film_id,)
+        "SELECT * FROM reviews WHERE film_id = ?",
+        (film_id,),
     ).fetchall()
     film = conn.execute(
         "SELECT * FROM films WHERE films.film_id = ?", (film_id,)
     ).fetchone()
+    avg_rating = conn.execute(
+        "SELECT AVG(rating) as avg_rating FROM reviews WHERE film_id = ?",
+        (film_id,),
+    ).fetchone()
     conn.close()
-    return render_template("film_info.jinja", film=film, reviews=reviews)
+    return render_template(
+        "film_info.jinja",
+        film=film,
+        reviews=reviews,
+        avg_rating=avg_rating["avg_rating"],
+    )
 
 
 @app.route("/delete-review", methods=["POST"])
